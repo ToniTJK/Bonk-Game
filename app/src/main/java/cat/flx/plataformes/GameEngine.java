@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Typeface;
 import android.os.Handler;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -25,6 +26,7 @@ public class GameEngine {
     private Scene scene;
     private Bonk bonk;
     private Input input;
+    private Score score;
 
     Context getContext() { return context; }
     public Bitmap getBitmap(int index) { return bitmapSet.getBitmap(index); }
@@ -122,9 +124,9 @@ public class GameEngine {
         boolean down = (keyEvent.getAction() == KeyEvent.ACTION_DOWN);
         if (!down) return true;
         switch (keyEvent.getKeyCode()) {
-            case KeyEvent.KEYCODE_Z: input.goLeft(); break;
-            case KeyEvent.KEYCODE_X: input.goRight(); break;
-            case KeyEvent.KEYCODE_M: input.jump(); /*audio.coin();*/ break;
+            case KeyEvent.KEYCODE_A: input.goLeft(); break;
+            case KeyEvent.KEYCODE_D: input.goRight(); break;
+            case KeyEvent.KEYCODE_W: input.jump(); /*audio.coin();*/ break;
             case KeyEvent.KEYCODE_P: input.pause(); break;
             default: return false;
         }
@@ -217,6 +219,12 @@ public class GameEngine {
         canvas.drawText("»", 28, 92, paint);
         canvas.drawRect(81, 76, 99, 99, paintKeys);
         canvas.drawText("^", 88, 92, paint);
+
+        Paint paintScore = new Paint();
+        paintScore.setTextSize(5);
+        paintScore.setColor(Color.RED);
+        paintScore.setTypeface(Typeface.create("Arial", Typeface.BOLD));
+        canvas.drawText("Score: "+String.valueOf(Score.getFinalScore()),60,5,paintScore);
     }
 
     public Bonk getBonk() {

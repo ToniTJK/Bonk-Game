@@ -3,6 +3,8 @@ package cat.flx.plataformes;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.os.Handler;
+import android.util.Log;
 import android.util.SparseIntArray;
 import android.widget.Toast;
 
@@ -61,7 +63,7 @@ public class Scene {
                         break;
                     case "CHARS":
                         parts2 = args.split(" ");
-                        for(String def : parts2) {
+                        for (String def : parts2) {
                             String[] item = def.split("=");
                             if (item.length != 2) continue;
                             char c = item[0].trim().charAt(0);
@@ -106,9 +108,8 @@ public class Scene {
             reader.close();
             sceneHeight = scene.length;
             sceneWidth = scene[0].length();
-        }
-        catch (IOException e) {
-            Toast.makeText(gameEngine.getContext(), "Error loading scene:" +  e.getMessage(), Toast.LENGTH_LONG).show();
+        } catch (IOException e) {
+            Toast.makeText(gameEngine.getContext(), "Error loading scene:" + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -130,30 +131,74 @@ public class Scene {
         return (WALLS.indexOf(sc) != -1);
     }
 
-    public int getSceneWidth() { return sceneWidth; }
-    public int getSceneHeight() { return sceneHeight; }
-    public int getWaterLevel() { return WATERLEVEL; }
+    public int getSceneWidth() {
+        return sceneWidth;
+    }
 
-    public int getWidth() { return sceneWidth * 16; }
-    int getHeight() { return sceneHeight * 16; }
+    public int getSceneHeight() {
+        return sceneHeight;
+    }
+
+    public int getWaterLevel() {
+        return WATERLEVEL;
+    }
+
+    public int getWidth() {
+        return sceneWidth * 16;
+    }
+
+    public int getHeight() {
+        return sceneHeight * 16;
+    }
 
     // Scene physics
     void physics(int delta) {
 
-        for(Coin coin : coins) coin.physics(delta);
-        for(Enemy enemy : enemies) enemy.physics(delta);
+        for (Coin coin : coins) coin.physics(delta);
+        for (Enemy enemy : enemies) enemy.physics(delta);
 
-        Bonk bonk = gameEngine.getBonk();
+        final Bonk bonk = gameEngine.getBonk();
         //Collision with coins
-        for(int i = coins.size() -1; i>=0; i--) {
+        for (int i = coins.size() - 1; i >= 0; i--) {
             Coin coin = coins.get(i);
-            if (bonk.getCollisionRect().intersect(coin.getCollisionRect())) {
-                gameEngine.getAudio().coin();
-                coins.remove(coin);
+            if (bonk.getCollisionRect() != null) {
+                if (bonk.getCollisionRect().intersect(coin.getCollisionRect())) {
+                    gameEngine.getAudio().coin();
+                    Score.increaseScore();
+                    Log.d("flx", String.valueOf(Score.getFinalScore()));
+                    coins.remove(coin);
+                }
             }
         }
 
+
+        for (int i = enemies.size() - 1; i >= 0; i--) {
+            if (bonk.getCollisionRect() != null) {
+                Enemy ene = enemies.get(i);
+                if (bonk.getCollisionRect().intersect(ene.getCollisionRect())) {
+                    gameEngine.getAudio().die();
+                    Score.reduceScore();
+                    Log.d("flx", "DEAD");
+                    Log.d("flx", String.valueOf(Score.getFinalScore()));
+                    bonk.die();
+
+                    Log.d("flx", String.valueOf(Lifes.getLife()));
+                    Lifes.recudeLifes();
+                    Log.d("flx", String.valueOf(Lifes.getLife()));
+
+                    Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                        public void run() {
+                            bonk.reset(0,20);
+                            bonk.alive();
+                        }
+                    }, 2700);
+                }
+            }
+        }
     }
+
+
 
     // Scene draw
     void draw(Canvas canvas, int offsetX, int offsetY, int screenWidth, int screenHeight) {
@@ -187,8 +232,11 @@ public class Scene {
             }
         }
 
+
         for(Coin coin : coins) coin.draw(canvas);
         for(Enemy enemy : enemies) enemy.draw(canvas);
+
+
 
     }
 }
