@@ -1,11 +1,14 @@
 package cat.flx.plataformes;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Handler;
 import android.util.Log;
 import android.util.SparseIntArray;
+import android.view.View;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -18,12 +21,18 @@ import java.util.List;
 import cat.flx.plataformes.characters.Bonk;
 import cat.flx.plataformes.characters.Coin;
 import cat.flx.plataformes.characters.Crab;
+import cat.flx.plataformes.characters.Door;
 import cat.flx.plataformes.characters.Enemy;
+
+import static cat.flx.plataformes.GameEngine.bonk;
 
 public class Scene {
     private GameEngine gameEngine;
     private String scene[];
     private Paint paint;
+    private Boolean isPause = false;
+    private float saveX;
+    private float saveY;
 
     private int sceneWidth, sceneHeight;
     private SparseIntArray CHARS;
@@ -32,6 +41,7 @@ public class Scene {
 
     private List<Coin> coins;
     private List<Enemy> enemies;
+    private List<Door> doors;
 
     Scene(GameEngine gameEngine) {
         this.gameEngine = gameEngine;
@@ -40,6 +50,7 @@ public class Scene {
         WATERLEVEL = 999;
         coins = new ArrayList<>();
         enemies = new ArrayList<>();
+        doors = new ArrayList<>();
     }
 
     void loadFromFile(int resource) {
@@ -93,6 +104,15 @@ public class Scene {
                         Coin coin = new Coin(gameEngine, coinX, coinY);
                         coins.add(coin);
                         break;
+                    case "DOOR":
+                        parts2 = args.split(",");
+                        if (parts2.length != 2) continue;
+                        int doorX = Integer.parseInt(parts2[0].trim()) * 16;
+                        int doorY = Integer.parseInt(parts2[1].trim()) * 16;
+                        Door door = new Door(gameEngine, doorX, doorY);
+                        doors.add(door);
+                        break;
+
                     case "CRAB":
                         parts2 = args.split(",");
                         if (parts2.length != 3) continue;
@@ -156,6 +176,7 @@ public class Scene {
 
         for (Coin coin : coins) coin.physics(delta);
         for (Enemy enemy : enemies) enemy.physics(delta);
+        for (Door door : doors) door.physics(delta);
 
         final Bonk bonk = gameEngine.getBonk();
         //Collision with coins
@@ -167,6 +188,18 @@ public class Scene {
                     Score.increaseScore();
                     Log.d("flx", String.valueOf(Score.getFinalScore()));
                     coins.remove(coin);
+                    pausePushed();
+                }
+            }
+        }
+
+        for (int i = doors.size() - 1; i >= 0; i--) {
+            Door doore = doors.get(i);
+            if (bonk.getCollisionRect() != null) {
+                if (bonk.getCollisionRect().intersect(doore .getCollisionRect())) {
+                    gameEngine.getAudio().stopMusic();
+                    loadFromFile(R.raw.scene);
+
                 }
             }
         }
@@ -178,27 +211,36 @@ public class Scene {
                 if (bonk.getCollisionRect().intersect(ene.getCollisionRect())) {
                     gameEngine.getAudio().die();
                     Score.reduceScore();
+
                     Log.d("flx", "DEAD");
                     Log.d("flx", String.valueOf(Score.getFinalScore()));
                     bonk.die();
 
-                    Log.d("flx", String.valueOf(Lifes.getLife()));
-                    Lifes.recudeLifes();
-                    Log.d("flx", String.valueOf(Lifes.getLife()));
+                    /*
+                    Log.d("flx", String.valueOf(Bonk.getLife()));
+                    Bonk.removeLife();
+                    Log.d("flx", String.valueOf(Bonk.getLife()));
+                    */
+
+
 
                     Handler handler = new Handler();
                     handler.postDelayed(new Runnable() {
                         public void run() {
                             bonk.reset(0,20);
                             bonk.alive();
+                            GameEngine.lifesCount -=1;
+                            if (GameEngine.lifesCount == 0){
+                                loadFromFile(R.raw.mini);
+                                GameEngine.lifesCount = 3;
+                                Score.resetScore();
+                            }
                         }
                     }, 2700);
                 }
             }
         }
     }
-
-
 
     // Scene draw
     void draw(Canvas canvas, int offsetX, int offsetY, int screenWidth, int screenHeight) {
@@ -232,11 +274,26 @@ public class Scene {
             }
         }
 
-
+        for(Door door : doors) door.draw(canvas);
         for(Coin coin : coins) coin.draw(canvas);
         for(Enemy enemy : enemies) enemy.draw(canvas);
 
 
 
     }
+       public void pausePushed(){
+        if(isPause == false) {
+            isPause = true;
+
+            //stop physics??
+
+            Log.d("flx", String.valueOf(GameEngine.positionBonkX) + " --- " + String.valueOf(GameEngine.positionBonkY));
+            Log.d("flx", String.valueOf(isPause));
+        } else {
+            isPause = false;
+            bonk.reset(bonk.getX(),bonk.getY());
+            Log.d("flx", String.valueOf(isPause));
+        }
+
+       }
 }

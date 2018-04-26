@@ -37,6 +37,13 @@ public class Bonk extends Character {
     private static final int PAD_TOP = 0;
     private static final int COL_WIDTH = 20;
     private static final int COL_HEIGHT = 32;
+    private static int life = 3;
+
+    public static int getLife() {
+        return life;
+    }
+
+    public static int removeLife(){return life -= 1;}
 
     public Bonk(GameEngine gameEngine, int x, int y) {
         super(gameEngine, x, y);

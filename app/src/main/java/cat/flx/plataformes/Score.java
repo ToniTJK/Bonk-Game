@@ -16,4 +16,6 @@ class Score {
     }
 
     public static int reduceScore() {return score -= 10;}
+
+    public static int resetScore() {return score = 0;}
 }

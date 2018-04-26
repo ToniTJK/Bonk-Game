@@ -2,11 +2,13 @@ package cat.flx.plataformes;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.os.Handler;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
@@ -24,9 +26,14 @@ public class GameEngine {
     private Audio audio;
     private Handler handler;
     private Scene scene;
-    private Bonk bonk;
+    public static Bonk bonk;
     private Input input;
     private Score score;
+    public static Boolean flag = true;
+    public static int lifesCount = 1;
+    public static float positionBonkX;
+    public static float positionBonkY;
+
 
     Context getContext() { return context; }
     public Bitmap getBitmap(int index) { return bitmapSet.getBitmap(index); }
@@ -134,7 +141,7 @@ public class GameEngine {
         return true;
     }
 
-    private Paint paint, paintKeys;
+    private Paint paint, paintKeys, paintScore;
     private int screenWidth, screenHeight, scaledWidth;
     private float scale;
 
@@ -156,6 +163,8 @@ public class GameEngine {
         if (scaledWidth * SCALED_HEIGHT == 0) return;
         int x = bonk.getX();
         int y = bonk.getY();
+        positionBonkX = x;
+        positionBonkY = y;
 
         // OFFSET X (100 scaled-pixels margin)
         offsetX = Math.max(offsetX, x - scaledWidth + 124);     // 100 + Bonk Width (24)
@@ -220,11 +229,39 @@ public class GameEngine {
         canvas.drawRect(81, 76, 99, 99, paintKeys);
         canvas.drawText("^", 88, 92, paint);
 
-        Paint paintScore = new Paint();
+        // Drawing Score
+        paintScore = new Paint();
         paintScore.setTextSize(5);
         paintScore.setColor(Color.RED);
         paintScore.setTypeface(Typeface.create("Arial", Typeface.BOLD));
         canvas.drawText("Score: "+String.valueOf(Score.getFinalScore()),60,5,paintScore);
+
+        float left = 3;
+
+        canvas.scale(0.3f,0.3f);
+        for (int i = 0; i <lifesCount ; i++) {
+            left +=20;
+            canvas.drawBitmap(getBitmap(53),left,5,null);
+        }
+
+        //canvas.drawBitmap(BitmapFactory.decodeResource(getResources(),R.raw.pausee);
+        MyButtonClass myBtn = new MyButtonClass(context);
+
+
+/*
+        if(flag){
+            for (int i = 0; i <lifesCount ; i++) {
+                left +=15;
+                canvas.drawBitmap(getBitmap(53),left,5,null);
+
+            }
+
+        }else{
+            lifesCount -=1;
+        }*/
+
+
+
     }
 
     public Bonk getBonk() {
@@ -234,4 +271,6 @@ public class GameEngine {
     public Audio getAudio() {
         return audio;
     }
+
 }
+
